@@ -1,5 +1,6 @@
 package com.moonflower.veinspread;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -26,7 +27,10 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
         veinConfig = new VeinConfig(getConfig());
 
         veinManager = new VeinManager(this);
+        veinManager.loadData();
         veinManager.start(veinConfig.intervalTicks);
+
+        Bukkit.getScheduler().runTaskTimer(this, () -> veinManager.saveData(), 6000L, 6000L);
 
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("vein").setExecutor(this);
@@ -40,7 +44,10 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
 
     @Override
     public void onDisable() {
-        if (veinManager != null) veinManager.stop();
+        if (veinManager != null) {
+            veinManager.stop();
+            veinManager.saveData();
+        }
         getLogger().info("VeinSpread by Moon Flower — выключен.");
     }
 
