@@ -152,24 +152,24 @@ public class VeinManager extends BukkitRunnable {
                 if (tip.isDead()) continue;
 
                 Block next = tip.position.getBlock().getRelative(tip.direction);
-                
-                if (!next.getChunk().isLoaded()) { 
-                    continue; 
+
+                if (!next.getChunk().isLoaded()) {
+                    continue;
                 }
-                
-                if (!cfg.replaceableBlocks.contains(next.getType())) { 
-                    tip.energy = 0; 
-                    continue; 
+
+                if (!cfg.replaceableBlocks.contains(next.getType())) {
+                    tip.energy = 0;
+                    continue;
                 }
 
                 next.setType(cfg.resultBlock, false);
                 tip.position = next.getLocation();
                 tip.energy--;
 
-                if (Math.random() > cfg.persistence) tip.direction = rotateRandom(tip.direction);
+                if (Math.random() > cfg.persistence) tip.direction = rotateRandom();
 
                 if (tip.branchDepth < cfg.maxBranchDepth && Math.random() < cfg.branchChance) {
-                    newBranches.add(new GrowthTip(next.getLocation(), rotateRandom(tip.direction),
+                    newBranches.add(new GrowthTip(next.getLocation(), rotateRandom(),
                             cfg.tipEnergy / 2, tip.branchDepth + 1));
                 }
                 if (Math.random() < cfg.verticalBranchChance) {
@@ -186,14 +186,14 @@ public class VeinManager extends BukkitRunnable {
     private boolean isActiveTime() {
         VeinConfig cfg = plugin.getVeinConfig();
         if (!cfg.timeEnabled) return true;
-        World world = Bukkit.getWorlds().get(0);
+        World world = Bukkit.getWorlds().getFirst();
         long t = world.getTime();
         return cfg.startTime <= cfg.endTime
                 ? t >= cfg.startTime && t <= cfg.endTime
                 : t >= cfg.startTime || t <= cfg.endTime;
     }
 
-    private BlockFace rotateRandom(BlockFace face) {
+    private BlockFace rotateRandom() {
         BlockFace[] all = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST,
                 BlockFace.WEST, BlockFace.UP, BlockFace.DOWN};
         return all[new Random().nextInt(all.length)];

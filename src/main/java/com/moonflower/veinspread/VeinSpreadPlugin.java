@@ -5,25 +5,38 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+@SuppressWarnings("override")
 public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExecutor, TabCompleter {
+
+    private static final String DEFAULT_LANG = "en";
 
     private VeinConfig veinConfig;
     private VeinManager veinManager;
+    private FileConfiguration messages;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        saveDefaultMessages();
+        loadMessages();
+
         veinConfig = new VeinConfig(getConfig());
 
         veinManager = new VeinManager(this);
@@ -33,8 +46,12 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
         Bukkit.getScheduler().runTaskTimer(this, () -> veinManager.saveData(), 6000L, 6000L);
 
         getServer().getPluginManager().registerEvents(this, this);
-        getCommand("vein").setExecutor(this);
-        getCommand("vein").setTabCompleter(this);
+
+        PluginCommand veinCmd = getCommand("vein");
+        if (veinCmd != null) {
+            veinCmd.setExecutor(this);
+            veinCmd.setTabCompleter(this);
+        }
 
         getLogger().info("╔══════════════════════════════════╗");
         getLogger().info("║  VeinSpread v1.1 — by Moon Flower  ║");
@@ -53,10 +70,41 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
 
     public VeinConfig getVeinConfig() { return veinConfig; }
 
+    private void saveDefaultMessages() {
+        File file = new File(getDataFolder(), "messages.yml");
+        if (!file.exists()) {
+            saveResource("messages.yml", false);
+        }
+    }
+
+    public void loadMessages() {
+        File file = new File(getDataFolder(), "messages.yml");
+        messages = YamlConfiguration.loadConfiguration(file);
+    }
+
+    private @NotNull String getString(@NotNull CommandSender sender, @NotNull String key) {
+        String lang = DEFAULT_LANG;
+        if (sender instanceof Player p) {
+            String locale = p.locale().toString();
+            if (locale.startsWith("ru")) lang = "ru";
+        }
+        String path = lang + "." + key;
+        String msg = messages.getString(path, messages.getString(DEFAULT_LANG + "." + key, "Missing message: " + key));
+        return msg.replace("&", "§");
+    }
+
+    private void sendMsg(@NotNull CommandSender sender, @NotNull String key, @NotNull String... replacements) {
+        String msg = getString(sender, key);
+        for (int i = 0; i < replacements.length; i += 2) {
+            msg = msg.replace(replacements[i], replacements[i + 1]);
+        }
+        sender.sendMessage(msg);
+    }
+
     @Override
-    public boolean onCommand(CommandSender s, Command cmd, String label, String[] a) {
+    public boolean onCommand(@NotNull CommandSender s, @NotNull Command cmd, @NotNull String label, @NotNull String[] a) {
         if (!s.hasPermission("veinspread.admin")) {
-            s.sendMessage("§cНет прав.");
+            sendMsg(s, "no-permission");
             return true;
         }
         if (a.length == 0) { sendHelp(s); return true; }
@@ -65,156 +113,158 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
             case "reload" -> {
                 reloadConfig();
                 veinConfig.load(getConfig());
+                loadMessages();
                 veinManager.start(veinConfig.intervalTicks);
-                s.sendMessage("§aКонфиг перезагружен. Интервал: §f" + veinConfig.intervalTicks + "т");
+                sendMsg(s, "reloaded", "%interval%", String.valueOf(veinConfig.intervalTicks));
             }
             case "info" -> {
-                s.sendMessage("§6=== §eVeinSpread §7by §dMoon Flower §6===");
-                s.sendMessage("§eКатализатор: §f" + veinConfig.catalystBlock);
-                s.sendMessage("§eРезультат: §f" + veinConfig.resultBlock);
-                s.sendMessage("§eЗаменяемых блоков: §f" + veinConfig.replaceableBlocks.size());
-                s.sendMessage("§eИнтервал: §f" + veinConfig.intervalTicks + " тиков");
-                s.sendMessage("§eЭнергия кончика: §f" + veinConfig.tipEnergy);
-                s.sendMessage("§eШанс ветвления: §f" + pct(veinConfig.branchChance));
-                s.sendMessage("§eИнерция (persistence): §f" + pct(veinConfig.persistence));
-                s.sendMessage("§eВерт. ветвление: §f" + pct(veinConfig.verticalBranchChance));
-                s.sendMessage("§eМакс. глубина веток: §f" + veinConfig.maxBranchDepth);
-                s.sendMessage("§eМакс. кончиков: §f" + veinConfig.maxTipsPerCatalyst);
-                s.sendMessage("§eВремя: §f" + (veinConfig.timeEnabled
-                        ? veinConfig.startTime + "–" + veinConfig.endTime : "выключено"));
+                sendMsg(s, "info-header");
+                sendMsg(s, "info-catalyst", "%value%", veinConfig.catalystBlock.name());
+                sendMsg(s, "info-result", "%value%", veinConfig.resultBlock.name());
+                sendMsg(s, "info-blocks", "%value%", String.valueOf(veinConfig.replaceableBlocks.size()));
+                sendMsg(s, "info-interval", "%value%", String.valueOf(veinConfig.intervalTicks));
+                sendMsg(s, "info-energy", "%value%", String.valueOf(veinConfig.tipEnergy));
+                sendMsg(s, "info-branch", "%value%", pct(veinConfig.branchChance));
+                sendMsg(s, "info-persistence", "%value%", pct(veinConfig.persistence));
+                sendMsg(s, "info-vertical", "%value%", pct(veinConfig.verticalBranchChance));
+                sendMsg(s, "info-depth", "%value%", String.valueOf(veinConfig.maxBranchDepth));
+                sendMsg(s, "info-maxtips", "%value%", String.valueOf(veinConfig.maxTipsPerCatalyst));
+                String timeStr = veinConfig.timeEnabled ? (veinConfig.startTime + "–" + veinConfig.endTime) : getString(s, "info-time-off");
+                sendMsg(s, "info-time", "%value%", timeStr);
             }
             case "list" -> {
-                s.sendMessage("§eАктивных катализаторов: §f" + veinManager.getActiveCount());
-                s.sendMessage("§eЖивых кончиков: §f" + veinManager.getTotalTips());
+                sendMsg(s, "list-catalysts", "%value%", String.valueOf(veinManager.getActiveCount()));
+                sendMsg(s, "list-tips", "%value%", String.valueOf(veinManager.getTotalTips()));
             }
             case "set" -> {
-                if (a.length < 3) { s.sendMessage("§cИспользование: /vein set <параметр> <значение>"); return true; }
+                if (a.length < 3) { s.sendMessage("§cUsage: /vein set <param> <value>"); return true; }
                 try { handleSet(s, a[1].toLowerCase(Locale.ROOT), a[2]); }
-                catch (Exception e) { s.sendMessage("§cОшибка: §f" + e.getMessage()); }
+                catch (Exception e) { sendMsg(s, "error", "%message%", e.getMessage()); }
             }
             case "addblock" -> {
-                if (a.length < 2) { s.sendMessage("§cИспользование: /vein addblock <Material>"); return true; }
+                if (a.length < 2) { s.sendMessage("§cUsage: /vein addblock <Material>"); return true; }
                 try {
                     Material m = Material.valueOf(a[1].toUpperCase(Locale.ROOT));
-                    if (veinConfig.replaceableBlocks.contains(m)) { s.sendMessage("§cУже в списке."); return true; }
+                    if (veinConfig.replaceableBlocks.contains(m)) { sendMsg(s, "block-already"); return true; }
                     veinConfig.replaceableBlocks.add(m);
-                    List<String> names = new ArrayList<>();
-                    for (Material mm : veinConfig.replaceableBlocks) names.add(mm.name());
-                    getConfig().set("vein.replaceable-blocks", names);
-                    saveConfig();
-                    s.sendMessage("§aДобавлено: §f" + m + " §7(всего: " + veinConfig.replaceableBlocks.size() + ")");
-                } catch (IllegalArgumentException e) { s.sendMessage("§cНеизвестный Material: §f" + a[1]); }
+                    saveReplaceableBlocks();
+                    sendMsg(s, "block-added", "%block%", m.name(), "%size%", String.valueOf(veinConfig.replaceableBlocks.size()));
+                } catch (IllegalArgumentException e) { sendMsg(s, "block-invalid", "%input%", a[1]); }
             }
             case "removeblock" -> {
-                if (a.length < 2) { s.sendMessage("§cИспользование: /vein removeblock <Material>"); return true; }
+                if (a.length < 2) { s.sendMessage("§cUsage: /vein removeblock <Material>"); return true; }
                 try {
                     Material m = Material.valueOf(a[1].toUpperCase(Locale.ROOT));
-                    if (!veinConfig.replaceableBlocks.remove(m)) { s.sendMessage("§cЭтого блока и не было в списке."); return true; }
-                    List<String> names = new ArrayList<>();
-                    for (Material mm : veinConfig.replaceableBlocks) names.add(mm.name());
-                    getConfig().set("vein.replaceable-blocks", names);
-                    saveConfig();
-                    s.sendMessage("§aУдалено: §f" + m + " §7(осталось: " + veinConfig.replaceableBlocks.size() + ")");
-                } catch (IllegalArgumentException e) { s.sendMessage("§cНеизвестный Material: §f" + a[1]); }
+                    if (!veinConfig.replaceableBlocks.remove(m)) { sendMsg(s, "block-not-found"); return true; }
+                    saveReplaceableBlocks();
+                    sendMsg(s, "block-removed", "%block%", m.name(), "%size%", String.valueOf(veinConfig.replaceableBlocks.size()));
+                } catch (IllegalArgumentException e) { sendMsg(s, "block-invalid", "%input%", a[1]); }
             }
             default -> sendHelp(s);
         }
         return true;
     }
 
-    private void handleSet(CommandSender s, String param, String raw) {
+    private void handleSet(@NotNull CommandSender s, @NotNull String param, @NotNull String raw) {
         switch (param) {
             case "catalyst-block", "catalyst" -> {
                 Material m = Material.valueOf(raw.toUpperCase(Locale.ROOT));
                 veinConfig.catalystBlock = m;
                 getConfig().set("vein.catalyst-block", m.name());
                 saveConfig();
-                s.sendMessage("§aКатализатор: §f" + m);
+                sendMsg(s, "set-success", "%param%", param, "%value%", m.name());
             }
             case "result-block", "result" -> {
                 Material m = Material.valueOf(raw.toUpperCase(Locale.ROOT));
                 veinConfig.resultBlock = m;
                 getConfig().set("vein.result-block", m.name());
                 saveConfig();
-                s.sendMessage("§aРезультат: §f" + m);
+                sendMsg(s, "set-success", "%param%", param, "%value%", m.name());
             }
             case "interval", "interval-ticks" -> {
                 int v = Integer.parseInt(raw);
-                if (v < 20) throw new IllegalArgumentException("минимум 20 тиков (1 секунда)");
+                if (v < 20) throw new IllegalArgumentException("min 20 ticks");
                 veinConfig.intervalTicks = v;
                 getConfig().set("vein.interval-ticks", v);
                 saveConfig();
                 veinManager.start(v);
-                s.sendMessage("§aИнтервал: §f" + v + " тиков §7(" + (v / 20.0) + "с)");
+                sendMsg(s, "set-success", "%param%", param, "%value%", String.valueOf(v));
             }
             case "tip-energy", "energy" -> {
                 int v = Integer.parseInt(raw);
-                if (v < 1) throw new IllegalArgumentException("минимум 1");
+                if (v < 1) throw new IllegalArgumentException("min 1");
                 veinConfig.tipEnergy = v;
                 getConfig().set("vein.tip-energy", v);
                 saveConfig();
-                s.sendMessage("§aЭнергия кончика: §f" + v);
+                sendMsg(s, "set-success", "%param%", param, "%value%", String.valueOf(v));
             }
             case "branch-chance", "branch" -> {
                 double v = parsePercent(raw);
                 veinConfig.branchChance = v;
                 getConfig().set("vein.branch-chance", v);
                 saveConfig();
-                s.sendMessage("§aШанс ветвления: §f" + pct(v));
+                sendMsg(s, "set-success", "%param%", param, "%value%", pct(v));
             }
             case "max-branch-depth", "depth" -> {
                 int v = Integer.parseInt(raw);
-                if (v < 0) throw new IllegalArgumentException("минимум 0");
+                if (v < 0) throw new IllegalArgumentException("min 0");
                 veinConfig.maxBranchDepth = v;
                 getConfig().set("vein.max-branch-depth", v);
                 saveConfig();
-                s.sendMessage("§aМакс. глубина веток: §f" + v);
+                sendMsg(s, "set-success", "%param%", param, "%value%", String.valueOf(v));
             }
             case "persistence", "inertia" -> {
                 double v = parsePercent(raw);
                 veinConfig.persistence = v;
                 getConfig().set("vein.persistence", v);
                 saveConfig();
-                s.sendMessage("§aИнерция: §f" + pct(v));
+                sendMsg(s, "set-success", "%param%", param, "%value%", pct(v));
             }
             case "vertical-branch-chance", "vertical" -> {
                 double v = parsePercent(raw);
                 veinConfig.verticalBranchChance = v;
                 getConfig().set("vein.vertical-branch-chance", v);
                 saveConfig();
-                s.sendMessage("§aВерт. ветвление: §f" + pct(v));
+                sendMsg(s, "set-success", "%param%", param, "%value%", pct(v));
             }
             case "max-tips-per-catalyst", "maxtips" -> {
                 int v = Integer.parseInt(raw);
-                if (v < 1) throw new IllegalArgumentException("минимум 1");
+                if (v < 1) throw new IllegalArgumentException("min 1");
                 veinConfig.maxTipsPerCatalyst = v;
                 getConfig().set("vein.max-tips-per-catalyst", v);
                 saveConfig();
-                s.sendMessage("§aМакс. кончиков: §f" + v);
+                sendMsg(s, "set-success", "%param%", param, "%value%", String.valueOf(v));
             }
             case "time-enabled", "time" -> {
                 boolean v = Boolean.parseBoolean(raw);
                 veinConfig.timeEnabled = v;
                 getConfig().set("time-conditions.enabled", v);
                 saveConfig();
-                s.sendMessage("§aУсловие по времени: §f" + (v ? "включено" : "выключено"));
+                sendMsg(s, "set-success", "%param%", param, "%value%", String.valueOf(v));
             }
             case "start-time" -> {
                 long v = Long.parseLong(raw);
                 veinConfig.startTime = v;
                 getConfig().set("time-conditions.start-time", v);
                 saveConfig();
-                s.sendMessage("§aСтарт-время: §f" + v);
+                sendMsg(s, "set-success", "%param%", param, "%value%", String.valueOf(v));
             }
             case "end-time" -> {
                 long v = Long.parseLong(raw);
                 veinConfig.endTime = v;
                 getConfig().set("time-conditions.end-time", v);
                 saveConfig();
-                s.sendMessage("§aКонец-время: §f" + v);
+                sendMsg(s, "set-success", "%param%", param, "%value%", String.valueOf(v));
             }
-            default -> throw new IllegalArgumentException("неизвестный параметр");
+            default -> throw new IllegalArgumentException("unknown parameter");
         }
+    }
+
+    private void saveReplaceableBlocks() {
+        List<String> names = new ArrayList<>();
+        for (Material mm : veinConfig.replaceableBlocks) names.add(mm.name());
+        getConfig().set("vein.replaceable-blocks", names);
+        saveConfig();
     }
 
     private double parsePercent(String raw) {
@@ -224,28 +274,25 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
             v = Double.parseDouble(raw);
             if (v > 1.0) v /= 100.0;
         }
-        if (v < 0 || v > 1) throw new IllegalArgumentException("должно быть 0–1 или 0–100%");
+        if (v < 0 || v > 1) throw new IllegalArgumentException("must be 0–1 or 0–100%");
         return v;
     }
 
     private String pct(double v) { return String.format(Locale.ROOT, "%.0f%%", v * 100); }
 
-    private void sendHelp(CommandSender s) {
-        s.sendMessage("§6=== §eVeinSpread §7by §dMoon Flower §6===");
-        s.sendMessage("§e/vein reload §7— перезагрузить конфиг");
-        s.sendMessage("§e/vein info §7— текущие настройки");
-        s.sendMessage("§e/vein list §7— активные катализаторы и кончики");
-        s.sendMessage("§e/vein set <параметр> <значение> §7— изменить настройку");
-        s.sendMessage("§e/vein addblock <Material> §7— добавить блок в список заменяемых");
-        s.sendMessage("§e/vein removeblock <Material> §7— убрать блок из списка");
-        s.sendMessage("§7Параметры: §fcatalyst-block, result-block, interval, tip-energy, ");
-        s.sendMessage("§fbranch-chance, max-branch-depth, persistence, vertical, maxtips, ");
-        s.sendMessage("§ftime, start-time, end-time");
-        s.sendMessage("§7Проценты: §f30% §7или §f0.3");
+    private void sendHelp(@NotNull CommandSender s) {
+        sendMsg(s, "help-header");
+        sendMsg(s, "help-reload");
+        sendMsg(s, "help-info");
+        sendMsg(s, "help-list");
+        sendMsg(s, "help-set");
+        sendMsg(s, "help-addblock");
+        sendMsg(s, "help-removeblock");
+        sendMsg(s, "help-params");
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender s, Command cmd, String alias, String[] a) {
+    public @NotNull List<String> onTabComplete(@NotNull CommandSender s, @NotNull Command cmd, @NotNull String alias, @NotNull String[] a) {
         List<String> out = new ArrayList<>();
         if (a.length == 1) {
             for (String sub : List.of("reload", "info", "list", "set", "addblock", "removeblock", "help")) {
@@ -283,14 +330,14 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
     }
 
     @EventHandler
-    public void onBlockPlace(BlockPlaceEvent e) {
+    public void onBlockPlace(@NotNull BlockPlaceEvent e) {
         if (e.getBlock().getType() == veinConfig.catalystBlock) {
             veinManager.registerCatalyst(e.getBlock().getLocation());
         }
     }
 
     @EventHandler
-    public void onBlockBreak(BlockBreakEvent e) {
+    public void onBlockBreak(@NotNull BlockBreakEvent e) {
         if (e.getBlock().getType() == veinConfig.catalystBlock) {
             veinManager.unregisterCatalyst(e.getBlock().getLocation());
         }
