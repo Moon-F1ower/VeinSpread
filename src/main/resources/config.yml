@@ -1,0 +1,28 @@
+# ==========================================================
+#  VeinSpread — by Moon Flower (Мун Флаур)
+#  https://github.com/Moon-F1ower/VeinSpread
+# ==========================================================
+
+vein:
+  catalyst-block: "SCULK_CATALYST"
+  result-block: "SCULK"
+  
+  replaceable-blocks:
+    - "STONE"
+    - "COBBLESTONE"
+    - "DIRT"
+    - "GRASS_BLOCK"
+    - "DEEPSLATE"
+
+  interval-ticks: 100
+  tip-energy: 12
+  branch-chance: 0.2
+  max-branch-depth: 3
+  persistence: 0.7
+  vertical-branch-chance: 0.1
+  max-tips-per-catalyst: 8
+
+time-conditions:
+  enabled: false
+  start-time: 13000
+  end-time: 23000

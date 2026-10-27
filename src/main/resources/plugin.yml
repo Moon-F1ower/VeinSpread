@@ -1,0 +1,20 @@
+name: VeinSpread
+version: 1.1.0
+main: com.moonflower.veinspread.VeinSpreadPlugin
+api-version: '1.21.11'
+description: Organic vein-based block spreading, like mycelium. By Moon Flower.
+author: Moon Flower
+website: https://github.com/Moon-F1ower/VeinSpread
+load: POSTWORLD
+
+commands:
+  vein:
+    description: Manage VeinSpread settings
+    usage: /vein <reload|info|list|set|addblock|removeblock|help>
+    aliases: [vs]
+    permission: veinspread.admin
+
+permissions:
+  veinspread.admin:
+    description: Access to VeinSpread commands
+    default: op
