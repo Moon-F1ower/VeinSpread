@@ -152,8 +152,15 @@ public class VeinManager extends BukkitRunnable {
                 if (tip.isDead()) continue;
 
                 Block next = tip.position.getBlock().getRelative(tip.direction);
-                if (!next.getChunk().isLoaded()) { tip.energy = 0; continue; }
-                if (!cfg.replaceableBlocks.contains(next.getType())) { tip.energy = 0; continue; }
+                
+                if (!next.getChunk().isLoaded()) { 
+                    continue; 
+                }
+                
+                if (!cfg.replaceableBlocks.contains(next.getType())) { 
+                    tip.energy = 0; 
+                    continue; 
+                }
 
                 next.setType(cfg.resultBlock, false);
                 tip.position = next.getLocation();
