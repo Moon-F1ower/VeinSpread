@@ -23,6 +23,9 @@ en:
   block-not-found: "&cThis block was not in the list."
   block-invalid: "&cUnknown Material: &f%input%"
   error: "&cError: &f%message%"
+  usage-set: "&cUsage: /vein set <param> <value>"
+  usage-add: "&cUsage: /vein addblock <Material>"
+  usage-remove: "&cUsage: /vein removeblock <Material>"
   help-header: "&6=== &eVeinSpread &7by &dMoon Flower &6==="
   help-reload: "&e/vein reload &7- Reload the config"
   help-info: "&e/vein info &7- Show current settings"
@@ -57,6 +60,9 @@ ru:
   block-not-found: "&cЭтого блока и не было в списке."
   block-invalid: "&cНеизвестный Material: &f%input%"
   error: "&cОшибка: &f%message%"
+  usage-set: "&cИспользование: /vein set <параметр> <значение>"
+  usage-add: "&cИспользование: /vein addblock <Material>"
+  usage-remove: "&cИспользование: /vein removeblock <Material>"
   help-header: "&6=== &eVeinSpread &7от &dMoon Flower &6==="
   help-reload: "&e/vein reload &7- Перезагрузить конфиг"
   help-info: "&e/vein info &7- Текущие настройки"
@@ -65,3 +71,17 @@ ru:
   help-addblock: "&e/vein addblock <Material> &7- Добавить блок в список"
   help-removeblock: "&e/vein removeblock <Material> &7- Убрать блок из списка"
   help-params: "&7Параметры: &fcatalyst-block, result-block, interval, tip-energy, branch-chance, max-branch-depth, persistence, vertical, maxtips, time, start-time, end-time"
+
+console:
+  en:
+    plugin-enabled: "VeinSpread v1.1.0 enabled. Catalyst: %catalyst%"
+    plugin-disabled: "VeinSpread by Moon Flower - disabled."
+    save-error: "Error saving veins: %message%"
+    load-error: "Error loading veins: %message%"
+    loaded-veins: "Loaded active veins: %amount%"
+  ru:
+    plugin-enabled: "VeinSpread v1.1.0 включен. Катализатор: %catalyst%"
+    plugin-disabled: "VeinSpread от Moon Flower — выключен."
+    save-error: "Ошибка при сохранении вен: %message%"
+    load-error: "Ошибка при загрузке вен: %message%"
+    loaded-veins: "Загружено активных вен: %amount%"
