@@ -97,7 +97,7 @@ public class VeinManager extends BukkitRunnable {
             try {
                 Files.writeString(file.toPath(), gson.toJson(dataList));
             } catch (IOException e) {
-                plugin.getLogger().severe("Ошибка при сохранении вен: " + e.getMessage());
+                plugin.getLogger().severe(plugin.getConsoleMessage("save-error", "%message%", e.getMessage()));
             }
         });
     }
@@ -127,9 +127,9 @@ public class VeinManager extends BukkitRunnable {
                 }
                 activeTips.put(catLoc, tips);
             }
-            plugin.getLogger().info("Загружено активных вен: " + activeTips.size());
+            plugin.getLogger().info(plugin.getConsoleMessage("loaded-veins", "%amount%", String.valueOf(activeTips.size())));
         } catch (Exception e) {
-            plugin.getLogger().severe("Ошибка при загрузке вен: " + e.getMessage());
+            plugin.getLogger().severe(plugin.getConsoleMessage("load-error", "%message%", e.getMessage()));
         }
     }
 
@@ -152,14 +152,15 @@ public class VeinManager extends BukkitRunnable {
                 if (tip.isDead()) continue;
 
                 Block next = tip.position.getBlock().getRelative(tip.direction);
-
-                if (!next.getChunk().isLoaded()) {
-                    continue;
+                
+                // If chunk is not loaded, the tip just waits instead of dying
+                if (!next.getChunk().isLoaded()) { 
+                    continue; 
                 }
-
-                if (!cfg.replaceableBlocks.contains(next.getType())) {
-                    tip.energy = 0;
-                    continue;
+                
+                if (!cfg.replaceableBlocks.contains(next.getType())) { 
+                    tip.energy = 0; 
+                    continue; 
                 }
 
                 next.setType(cfg.resultBlock, false);
@@ -186,7 +187,7 @@ public class VeinManager extends BukkitRunnable {
     private boolean isActiveTime() {
         VeinConfig cfg = plugin.getVeinConfig();
         if (!cfg.timeEnabled) return true;
-        World world = Bukkit.getWorlds().getFirst();
+        World world = Bukkit.getWorlds().get(0);
         long t = world.getTime();
         return cfg.startTime <= cfg.endTime
                 ? t >= cfg.startTime && t <= cfg.endTime
