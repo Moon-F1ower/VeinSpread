@@ -25,8 +25,6 @@ import java.util.Locale;
 @SuppressWarnings("override")
 public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExecutor, TabCompleter {
 
-    private static final String DEFAULT_LANG = "en";
-
     private VeinConfig veinConfig;
     private VeinManager veinManager;
     private FileConfiguration messages;
@@ -46,17 +44,14 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
         Bukkit.getScheduler().runTaskTimer(this, () -> veinManager.saveData(), 6000L, 6000L);
 
         getServer().getPluginManager().registerEvents(this, this);
-
+        
         PluginCommand veinCmd = getCommand("vein");
         if (veinCmd != null) {
             veinCmd.setExecutor(this);
             veinCmd.setTabCompleter(this);
         }
 
-        getLogger().info("╔══════════════════════════════════╗");
-        getLogger().info("║  VeinSpread v1.1 — by Moon Flower  ║");
-        getLogger().info("║  Catalyst: " + veinConfig.catalystBlock);
-        getLogger().info("╚══════════════════════════════════╝");
+        getLogger().info(getConsoleMessage("plugin-enabled", "%catalyst%", veinConfig.catalystBlock.name()));
     }
 
     @Override
@@ -65,7 +60,7 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
             veinManager.stop();
             veinManager.saveData();
         }
-        getLogger().info("VeinSpread by Moon Flower — выключен.");
+        getLogger().info(getConsoleMessage("plugin-disabled"));
     }
 
     public VeinConfig getVeinConfig() { return veinConfig; }
@@ -83,14 +78,26 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
     }
 
     private @NotNull String getString(@NotNull CommandSender sender, @NotNull String key) {
-        String lang = DEFAULT_LANG;
+        String lang = "en";
         if (sender instanceof Player p) {
-            String locale = p.locale().toString();
+            String locale = p.locale().toString(); 
             if (locale.startsWith("ru")) lang = "ru";
         }
         String path = lang + "." + key;
-        String msg = messages.getString(path, messages.getString(DEFAULT_LANG + "." + key, "Missing message: " + key));
+        String msg = messages.getString(path, messages.getString("en." + key, "Missing message: " + key));
         return msg.replace("&", "§");
+    }
+
+    public @NotNull String getConsoleMessage(@NotNull String key, @NotNull String... replacements) {
+        String lang = getConfig().getString("console-language", "en").toLowerCase();
+        String path = "console." + lang + "." + key;
+        String msg = messages.getString(path, messages.getString("console.en." + key, "Missing console message: " + key));
+        if (msg != null) {
+            for (int i = 0; i < replacements.length; i += 2) {
+                msg = msg.replace(replacements[i], replacements[i + 1]);
+            }
+        }
+        return msg;
     }
 
     private void sendMsg(@NotNull CommandSender sender, @NotNull String key, @NotNull String... replacements) {
@@ -137,12 +144,12 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
                 sendMsg(s, "list-tips", "%value%", String.valueOf(veinManager.getTotalTips()));
             }
             case "set" -> {
-                if (a.length < 3) { s.sendMessage("§cUsage: /vein set <param> <value>"); return true; }
+                if (a.length < 3) { sendMsg(s, "usage-set"); return true; }
                 try { handleSet(s, a[1].toLowerCase(Locale.ROOT), a[2]); }
                 catch (Exception e) { sendMsg(s, "error", "%message%", e.getMessage()); }
             }
             case "addblock" -> {
-                if (a.length < 2) { s.sendMessage("§cUsage: /vein addblock <Material>"); return true; }
+                if (a.length < 2) { sendMsg(s, "usage-add"); return true; }
                 try {
                     Material m = Material.valueOf(a[1].toUpperCase(Locale.ROOT));
                     if (veinConfig.replaceableBlocks.contains(m)) { sendMsg(s, "block-already"); return true; }
@@ -152,7 +159,7 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
                 } catch (IllegalArgumentException e) { sendMsg(s, "block-invalid", "%input%", a[1]); }
             }
             case "removeblock" -> {
-                if (a.length < 2) { s.sendMessage("§cUsage: /vein removeblock <Material>"); return true; }
+                if (a.length < 2) { sendMsg(s, "usage-remove"); return true; }
                 try {
                     Material m = Material.valueOf(a[1].toUpperCase(Locale.ROOT));
                     if (!veinConfig.replaceableBlocks.remove(m)) { sendMsg(s, "block-not-found"); return true; }
@@ -165,7 +172,7 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
         return true;
     }
 
-    private void handleSet(@NotNull CommandSender s, @NotNull String param, @NotNull String raw) {
+    private void handleSet(CommandSender s, String param, String raw) {
         switch (param) {
             case "catalyst-block", "catalyst" -> {
                 Material m = Material.valueOf(raw.toUpperCase(Locale.ROOT));
@@ -280,7 +287,7 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
 
     private String pct(double v) { return String.format(Locale.ROOT, "%.0f%%", v * 100); }
 
-    private void sendHelp(@NotNull CommandSender s) {
+    private void sendHelp(CommandSender s) {
         sendMsg(s, "help-header");
         sendMsg(s, "help-reload");
         sendMsg(s, "help-info");
