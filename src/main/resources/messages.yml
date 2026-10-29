@@ -80,13 +80,13 @@ ru:
 
 console:
   en:
-    plugin-enabled: "VeinSpread v1.1.0 enabled. Catalyst: %catalyst%"
+    plugin-enabled: "VeinSpread v%version% enabled. Catalyst: %catalyst%"
     plugin-disabled: "VeinSpread by Moon Flower - disabled."
     save-error: "Error saving veins: %message%"
     load-error: "Error loading veins: %message%"
     loaded-veins: "Loaded active veins: %amount%"
   ru:
-    plugin-enabled: "VeinSpread v1.1.0 включен. Катализатор: %catalyst%"
+    plugin-enabled: "VeinSpread v%version% включен. Катализатор: %catalyst%"
     plugin-disabled: "VeinSpread от Moon Flower — выключен."
     save-error: "Ошибка при сохранении вен: %message%"
     load-error: "Ошибка при загрузке вен: %message%"
