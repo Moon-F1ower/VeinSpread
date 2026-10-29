@@ -143,6 +143,19 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
                 sendMsg(s, "list-catalysts", "%value%", String.valueOf(veinManager.getActiveCount()));
                 sendMsg(s, "list-tips", "%value%", String.valueOf(veinManager.getTotalTips()));
             }
+            case "blocks" -> {
+                sendMsg(s, "blocks-header");
+                if (veinConfig.replaceableBlocks.isEmpty()) {
+                    sendMsg(s, "blocks-empty");
+                } else {
+                    StringBuilder sb = new StringBuilder();
+                    for (Material m : veinConfig.replaceableBlocks) {
+                        sb.append("§f").append(m.name()).append("§7, ");
+                    }
+                    if (sb.length() > 2) sb.setLength(sb.length() - 2);
+                    s.sendMessage(sb.toString());
+                }
+            }
             case "set" -> {
                 if (a.length < 3) { sendMsg(s, "usage-set"); return true; }
                 try { handleSet(s, a[1].toLowerCase(Locale.ROOT), a[2]); }
@@ -292,6 +305,7 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
         sendMsg(s, "help-reload");
         sendMsg(s, "help-info");
         sendMsg(s, "help-list");
+        sendMsg(s, "help-blocks");
         sendMsg(s, "help-set");
         sendMsg(s, "help-addblock");
         sendMsg(s, "help-removeblock");
@@ -302,7 +316,7 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
     public @NotNull List<String> onTabComplete(@NotNull CommandSender s, @NotNull Command cmd, @NotNull String alias, @NotNull String[] a) {
         List<String> out = new ArrayList<>();
         if (a.length == 1) {
-            for (String sub : List.of("reload", "info", "list", "set", "addblock", "removeblock", "help")) {
+            for (String sub : List.of("reload", "info", "list", "blocks", "set", "addblock", "removeblock", "help")) {
                 if (sub.startsWith(a[0].toLowerCase(Locale.ROOT))) out.add(sub);
             }
         } else if (a.length == 2) {
