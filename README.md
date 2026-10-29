@@ -7,7 +7,9 @@
 [![Modrinth](https://img.shields.io/badge/Modrinth-Download-1bd96a?logo=modrinth)](https://modrinth.com/plugin/veinspread)
 [![GitHub](https://img.shields.io/badge/GitHub-Source-black?logo=github)](https://github.com/Moon-F1ower/VeinSpread)
 
-> Organic vein-based block spreading — like mycelium, sculk, or roots.
+**by Moon Flower**
+
+> Organic vein-based block spreading — like mycelium, sculk, or vines.
 > A lightweight Paper/Spigot plugin for Minecraft 1.21+. Fully configurable via
 > `config.yml` or in-game commands.
 
@@ -18,9 +20,11 @@
 - **Veins, not circles.** Infection grows in winding lines with branches — like mycelium, sculk veins, or tree roots.
 - **Catalyst-driven.** Place a catalyst block — and veins start crawling from it. Break it — growth stops, but the blocks that have already grown remain in the world.
 - **Full control.** Step speed, vein length, branching frequency, direction "inertia", vertical branches, tip limit — everything is configurable.
-- **Replaceable blocks list.** You decide what the vein is allowed to "eat".
+- **Replaceable blocks list.** You decide what the vein is allowed to "eat". Use `/vein blocks` to see the current list.
 - **Time conditions.** Veins can grow only at night, only during the day, or always.
 - **In-game management.** The `/vein` command with tab-completion: change percentages, blocks, and speed without restarting the server. Changes are saved to the config immediately.
+- **Persistent growth.** Active veins are saved to `veins.json` and seamlessly resume after a server restart.
+- **Localization.** Player messages support both English and Russian out of the box.
 
 ---
 
@@ -36,7 +40,7 @@
 ## 📦 Installation
 
 1. Make sure you have **Paper 1.21+** (or Spigot 1.21+) and **Java 21**.
-2. Download `VeinSpread-x.y.z.jar` from the releases page on Modrinth.
+2. Download `VeinSpread-1.1.1.jar` from the releases page on Modrinth or GitHub.
 3. Place the `.jar` into the `plugins/` folder on your server.
 4. Restart the server.
 5. Open `plugins/VeinSpread/config.yml` — or use `/vein` directly in-game.
@@ -108,6 +112,7 @@ All commands require the `veinspread.admin` permission (default is `op`).
 | `/vein reload` | Reload the config |
 | `/vein info` | Show current settings |
 | `/vein list` | List active catalysts and tips |
+| `/vein blocks` | List all replaceable blocks |
 | `/vein set <parameter> <value>` | Change a setting on the fly |
 | `/vein addblock <Material>` | Add a block to the list |
 | `/vein removeblock <Material>` | Remove a block from the list |
@@ -208,7 +213,7 @@ Yes, but Paper is recommended — it was tested on Paper, and the 1.21 API is mo
 Not yet — the plugin places blocks via `Block.setType()` without firing `BlockSpreadEvent`. WorldGuard won't see it. It's on the roadmap.
 
 **Are veins saved after a restart?**  
-No. Active tips are kept in memory. After a restart, grown blocks remain, but they won't grow further until you place a new catalyst. Saving to disk is on the roadmap.
+Yes! Active veins are saved to `veins.json` every 5 minutes and on server shutdown. They will seamlessly resume growing when the server starts again.
 
 **Can I have multiple catalysts with different settings?**  
 In the current version — no, there is a single config for the server. Profiles by `Material` are on the roadmap.
@@ -226,7 +231,8 @@ No, only full block replacement. It's on the roadmap.
 
 ## 🗺️ Roadmap
 
-- [ ] Save active veins to disk (YAML/JSON)
+- [x] Save active veins to disk (YAML/JSON) *(Done in v1.1.0)*
+- [x] In-game localization (English/Russian) *(Done in v1.1.0)*
 - [ ] Support thin blocks (`SCULK_VEIN`, `GLOW_LICHEN`, `VINE`)
 - [ ] Different catalyst profiles (`Map<Material, Profile>`)
 - [ ] Light and biome conditions
@@ -236,15 +242,15 @@ No, only full block replacement. It's on the roadmap.
 
 ---
 
-## 📜 License
+## 📜 License & Source
 
-MIT — see [LICENSE](LICENSE).
+This project is licensed under the MIT License — see [LICENSE](LICENSE).
+Source code is available on GitHub: [github.com/Moon-F1ower/VeinSpread](https://github.com/Moon-F1ower/VeinSpread)
 
 ---
 
 ## 💬 Feedback
 
-If you find a bug or have a suggestion, please open an issue on GitHub:
-[github.com/Moon-F1ower/VeinSpread/issues](https://github.com/Moon-F1ower/VeinSpread/issues)
+Found a bug or have a suggestion? Please open an issue on GitHub: [github.com/Moon-F1ower/VeinSpread/issues](https://github.com/Moon-F1ower/VeinSpread/issues)
 
 If you use the plugin on your server — I'd love to see screenshots in the Modrinth comments 🌿
