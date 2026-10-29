@@ -51,7 +51,9 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
             veinCmd.setTabCompleter(this);
         }
 
-        getLogger().info(getConsoleMessage("plugin-enabled", "%catalyst%", veinConfig.catalystBlock.name()));
+        getLogger().info(getConsoleMessage("plugin-enabled", 
+                "%version%", getPluginMeta().getVersion(),
+                "%catalyst%", veinConfig.catalystBlock.name()));
     }
 
     @Override
