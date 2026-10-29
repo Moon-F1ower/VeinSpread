@@ -69,7 +69,7 @@ public class VeinManager extends BukkitRunnable {
             snapshot.put(entry.getKey().clone(), tipsCopy);
         }
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        Runnable saveTask = () -> {
             List<VeinData> dataList = new ArrayList<>();
             for (Map.Entry<Location, List<GrowthTip>> entry : snapshot.entrySet()) {
                 Location loc = entry.getKey();
@@ -99,7 +99,13 @@ public class VeinManager extends BukkitRunnable {
             } catch (IOException e) {
                 plugin.getLogger().severe(plugin.getConsoleMessage("save-error", "%message%", e.getMessage()));
             }
-        });
+        };
+
+        if (plugin.isEnabled()) {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, saveTask);
+        } else {
+            saveTask.run(); 
+        }
     }
 
     public void loadData() {
@@ -153,7 +159,6 @@ public class VeinManager extends BukkitRunnable {
 
                 Block next = tip.position.getBlock().getRelative(tip.direction);
                 
-                // If chunk is not loaded, the tip just waits instead of dying
                 if (!next.getChunk().isLoaded()) { 
                     continue; 
                 }
@@ -187,7 +192,7 @@ public class VeinManager extends BukkitRunnable {
     private boolean isActiveTime() {
         VeinConfig cfg = plugin.getVeinConfig();
         if (!cfg.timeEnabled) return true;
-        World world = Bukkit.getWorlds().get(0);
+        World world = Bukkit.getWorlds().getFirst();
         long t = world.getTime();
         return cfg.startTime <= cfg.endTime
                 ? t >= cfg.startTime && t <= cfg.endTime
