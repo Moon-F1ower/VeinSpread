@@ -10,16 +10,20 @@ public class VeinConfig {
     public Material catalystBlock;
     public Material resultBlock;
     public List<Material> replaceableBlocks = new ArrayList<>();
-    public int intervalTicks;
+    public double growthChance;
     public int tipEnergy;
     public double branchChance;
     public int maxBranchDepth;
     public double persistence;
     public double verticalBranchChance;
+    public int thickenPerTick;
+    public double maxThicknessRadius;
+    public int maxBlocksPerCatalyst;
     public int maxTipsPerCatalyst;
     public boolean timeEnabled;
     public long startTime;
     public long endTime;
+    public boolean callEventOnThicken;
 
     public VeinConfig(FileConfiguration cfg) {
         load(cfg);
@@ -35,15 +39,19 @@ public class VeinConfig {
             catch (IllegalArgumentException ignored) {}
         }
 
-        this.intervalTicks = cfg.getInt("vein.interval-ticks", 100);
-        this.tipEnergy = cfg.getInt("vein.tip-energy", 12);
-        this.branchChance = cfg.getDouble("vein.branch-chance", 0.2);
-        this.maxBranchDepth = cfg.getInt("vein.max-branch-depth", 3);
-        this.persistence = cfg.getDouble("vein.persistence", 0.7);
-        this.verticalBranchChance = cfg.getDouble("vein.vertical-branch-chance", 0.1);
-        this.maxTipsPerCatalyst = cfg.getInt("vein.max-tips-per-catalyst", 8);
+        this.growthChance = cfg.getDouble("growth-chance", 0.02);
+        this.tipEnergy = cfg.getInt("vein.tip-energy", 25);
+        this.branchChance = cfg.getDouble("vein.branch-chance", 0.35);
+        this.maxBranchDepth = cfg.getInt("vein.max-branch-depth", 10);
+        this.persistence = cfg.getDouble("vein.persistence", 0.5);
+        this.verticalBranchChance = cfg.getDouble("vein.vertical-branch-chance", 0.15);
+        this.thickenPerTick = cfg.getInt("vein.thicken-per-tick", 5);
+        this.maxThicknessRadius = cfg.getDouble("vein.max-thickness-radius", 12.0);
+        this.maxBlocksPerCatalyst = cfg.getInt("vein.max-blocks-per-catalyst", 5000);
+        this.maxTipsPerCatalyst = cfg.getInt("vein.max-tips-per-catalyst", 500);
         this.timeEnabled = cfg.getBoolean("time-conditions.enabled", false);
         this.startTime = cfg.getLong("time-conditions.start-time", 13000);
         this.endTime = cfg.getLong("time-conditions.end-time", 23000);
+        this.callEventOnThicken = cfg.getBoolean("vein.call-event-on-thicken", false);
     }
 }

@@ -1,16 +1,9 @@
-# ==========================================================
-#  VeinSpread — by Moon Flower
-#  https://github.com/Moon-F1ower/VeinSpread
-# ==========================================================
+growth-chance: 0.02
 
 vein:
-  # The block that triggers the spread when placed
   catalyst-block: "SCULK_CATALYST"
-  
-  # The block that the infected blocks turn into
   result-block: "SCULK"
   
-  # Blocks that can be replaced by the vein
   replaceable-blocks:
     - "STONE"
     - "COBBLESTONE"
@@ -18,32 +11,28 @@ vein:
     - "GRASS_BLOCK"
     - "DEEPSLATE"
 
-  # Time between growth steps (20 ticks = 1 second)
-  interval-ticks: 100
-  
-  # How many steps a single tip can make before dying
-  tip-energy: 12
-  
-  # Chance to create a branch (0.2 = 20%)
-  branch-chance: 0.2
-  
-  # Maximum depth of branching (to prevent infinite trees)
-  max-branch-depth: 3
-  
-  # Direction inertia (1.0 = straight lines, 0.0 = chaotic)
-  persistence: 0.7
-  
-  # Chance to branch vertically
-  vertical-branch-chance: 0.1
-  
-  # Max active tips per catalyst (lag protection)
-  max-tips-per-catalyst: 8
+  tip-energy: 25
+  branch-chance: 0.35
+  max-branch-depth: 10
+  persistence: 0.5
+  vertical-branch-chance: 0.15
+  max-tips-per-catalyst: 500
 
-# Conditions based on in-game time
+  # THICKENING SETTINGS (Filling gaps near the center)
+  thicken-per-tick: 5
+  max-thickness-radius: 12.0
+  
+  # Maximum number of blocks one catalyst can infect.
+  # Set to -1 to remove the limit.
+  max-blocks-per-catalyst: 5000
+
+  # Should the plugin call BlockSpreadEvent for thickening?
+  # Set to true for WorldGuard compatibility, but it may cause lag.
+  call-event-on-thicken: false
+
 time-conditions:
   enabled: false
   start-time: 13000
   end-time: 23000
 
-# Language for console messages ("en" or "ru").
 console-language: "en"

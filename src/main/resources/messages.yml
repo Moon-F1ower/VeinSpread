@@ -1,11 +1,14 @@
 en:
   no-permission: "&cYou do not have permission to use this command."
-  reloaded: "&aConfig reloaded. Interval: &f%interval%&at."
+  reloaded: "&aConfig reloaded."
   info-header: "&6=== &eVeinSpread &7by &dMoon Flower &6==="
   info-catalyst: "&eCatalyst: &f%value%"
   info-result: "&eResult: &f%value%"
   info-blocks: "&eReplaceable blocks: &f%value% &7(/vein blocks)"
-  info-interval: "&eInterval: &f%value% ticks"
+  info-growth-chance: "&eGrowth chance: &f%value%"
+  info-thicken: "&eThicken per tick: &f%value%"
+  info-radius: "&eMax thickness radius: &f%value%"
+  info-limit: "&eMax blocks limit: &f%value%"
   info-energy: "&eTip energy: &f%value%"
   info-branch: "&eBranch chance: &f%value%"
   info-persistence: "&ePersistence: &f%value%"
@@ -36,16 +39,19 @@ en:
   help-set: "&e/vein set <param> <value> &7- Change a setting"
   help-addblock: "&e/vein addblock <Material> &7- Add block to list"
   help-removeblock: "&e/vein removeblock <Material> &7- Remove block from list"
-  help-params: "&7Parameters: &fcatalyst-block, result-block, interval, tip-energy, branch-chance, max-branch-depth, persistence, vertical, maxtips, time, start-time, end-time"
+  help-params: "&7Parameters: &fcatalyst-block, result-block, growth-chance, thicken-per-tick, max-thickness-radius, max-blocks-per-catalyst, tip-energy, branch-chance, max-branch-depth, persistence, vertical, maxtips, time, start-time, end-time"
 
 ru:
   no-permission: "&cУ вас нет прав на использование этой команды."
-  reloaded: "&aКонфиг перезагружен. Интервал: &f%interval%&aт."
+  reloaded: "&aКонфиг перезагружен."
   info-header: "&6=== &eVeinSpread &7от &dMoon Flower &6==="
   info-catalyst: "&eКатализатор: &f%value%"
   info-result: "&eРезультат: &f%value%"
   info-blocks: "&eЗаменяемых блоков: &f%value% &7(/vein blocks)"
-  info-interval: "&eИнтервал: &f%value% тиков"
+  info-growth-chance: "&eШанс роста: &f%value%"
+  info-thicken: "&eУтолщение за тик: &f%value%"
+  info-radius: "&eРадиус утолщения: &f%value%"
+  info-limit: "&eЛимит блоков: &f%value%"
   info-energy: "&eЭнергия кончика: &f%value%"
   info-branch: "&eШанс ветвления: &f%value%"
   info-persistence: "&eИнерция: &f%value%"
@@ -76,7 +82,7 @@ ru:
   help-set: "&e/vein set <параметр> <значение> &7- Изменить настройку"
   help-addblock: "&e/vein addblock <Material> &7- Добавить блок в список"
   help-removeblock: "&e/vein removeblock <Material> &7- Убрать блок из списка"
-  help-params: "&7Параметры: &fcatalyst-block, result-block, interval, tip-energy, branch-chance, max-branch-depth, persistence, vertical, maxtips, time, start-time, end-time"
+  help-params: "&7Параметры: &fcatalyst-block, result-block, growth-chance, thicken-per-tick, max-thickness-radius, max-blocks-per-catalyst, tip-energy, branch-chance, max-branch-depth, persistence, vertical, maxtips, time, start-time, end-time"
 
 console:
   en:

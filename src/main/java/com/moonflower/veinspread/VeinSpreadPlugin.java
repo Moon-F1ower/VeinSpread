@@ -12,8 +12,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.*;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +39,7 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
 
         veinManager = new VeinManager(this);
         veinManager.loadData();
-        veinManager.start(veinConfig.intervalTicks);
+        veinManager.start();
 
         Bukkit.getScheduler().runTaskTimer(this, () -> veinManager.saveData(), 6000L, 6000L);
 
@@ -123,15 +123,18 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
                 reloadConfig();
                 veinConfig.load(getConfig());
                 loadMessages();
-                veinManager.start(veinConfig.intervalTicks);
-                sendMsg(s, "reloaded", "%interval%", String.valueOf(veinConfig.intervalTicks));
+                veinManager.start();
+                sendMsg(s, "reloaded");
             }
             case "info" -> {
                 sendMsg(s, "info-header");
                 sendMsg(s, "info-catalyst", "%value%", veinConfig.catalystBlock.name());
                 sendMsg(s, "info-result", "%value%", veinConfig.resultBlock.name());
                 sendMsg(s, "info-blocks", "%value%", String.valueOf(veinConfig.replaceableBlocks.size()));
-                sendMsg(s, "info-interval", "%value%", String.valueOf(veinConfig.intervalTicks));
+                sendMsg(s, "info-growth-chance", "%value%", pct(veinConfig.growthChance));
+                sendMsg(s, "info-thicken", "%value%", String.valueOf(veinConfig.thickenPerTick));
+                sendMsg(s, "info-radius", "%value%", String.valueOf(veinConfig.maxThicknessRadius));
+                sendMsg(s, "info-limit", "%value%", veinConfig.maxBlocksPerCatalyst == -1 ? "Unlimited" : String.valueOf(veinConfig.maxBlocksPerCatalyst));
                 sendMsg(s, "info-energy", "%value%", String.valueOf(veinConfig.tipEnergy));
                 sendMsg(s, "info-branch", "%value%", pct(veinConfig.branchChance));
                 sendMsg(s, "info-persistence", "%value%", pct(veinConfig.persistence));
@@ -203,13 +206,42 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
                 saveConfig();
                 sendMsg(s, "set-success", "%param%", param, "%value%", m.name());
             }
-            case "interval", "interval-ticks" -> {
-                int v = Integer.parseInt(raw);
-                if (v < 20) throw new IllegalArgumentException("min 20 ticks");
-                veinConfig.intervalTicks = v;
-                getConfig().set("vein.interval-ticks", v);
+            case "growth-chance", "chance" -> {
+                double v = parsePercent(raw);
+                veinConfig.growthChance = v;
+                getConfig().set("growth-chance", v);
                 saveConfig();
-                veinManager.start(v);
+                sendMsg(s, "set-success", "%param%", param, "%value%", pct(v));
+            }
+            case "thicken-per-tick", "thicken" -> {
+                int v = Integer.parseInt(raw);
+                if (v < 0) throw new IllegalArgumentException("min 0");
+                veinConfig.thickenPerTick = v;
+                getConfig().set("vein.thicken-per-tick", v);
+                saveConfig();
+                sendMsg(s, "set-success", "%param%", param, "%value%", String.valueOf(v));
+            }
+            case "max-thickness-radius", "radius" -> {
+                double v = Double.parseDouble(raw);
+                if (v < 1) throw new IllegalArgumentException("min 1");
+                veinConfig.maxThicknessRadius = v;
+                getConfig().set("vein.max-thickness-radius", v);
+                saveConfig();
+                sendMsg(s, "set-success", "%param%", param, "%value%", String.valueOf(v));
+            }
+            case "max-blocks-per-catalyst", "limit" -> {
+                int v = Integer.parseInt(raw);
+                if (v == 0 || v < -1) throw new IllegalArgumentException("must be -1 or > 0");
+                veinConfig.maxBlocksPerCatalyst = v;
+                getConfig().set("vein.max-blocks-per-catalyst", v);
+                saveConfig();
+                sendMsg(s, "set-success", "%param%", param, "%value%", v == -1 ? "Unlimited" : String.valueOf(v));
+            }
+            case "call-event-on-thicken", "call-event" -> {
+                boolean v = Boolean.parseBoolean(raw);
+                veinConfig.callEventOnThicken = v;
+                getConfig().set("vein.call-event-on-thicken", v);
+                saveConfig();
                 sendMsg(s, "set-success", "%param%", param, "%value%", String.valueOf(v));
             }
             case "tip-energy", "energy" -> {
@@ -323,7 +355,7 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
             }
         } else if (a.length == 2) {
             if (a[0].equalsIgnoreCase("set")) {
-                for (String p : List.of("catalyst-block", "result-block", "interval", "tip-energy",
+                for (String p : List.of("catalyst-block", "result-block", "growth-chance", "thicken-per-tick", "max-thickness-radius", "max-blocks-per-catalyst", "call-event-on-thicken", "tip-energy",
                         "branch-chance", "max-branch-depth", "persistence", "vertical",
                         "maxtips", "time", "start-time", "end-time")) {
                     if (p.startsWith(a[1].toLowerCase(Locale.ROOT))) out.add(p);
@@ -336,11 +368,14 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
         } else if (a.length == 3 && a[0].equalsIgnoreCase("set")) {
             String p = a[1].toLowerCase(Locale.ROOT);
             switch (p) {
-                case "branch-chance", "persistence", "vertical" -> out.addAll(List.of("10%", "25%", "50%", "75%", "0.3"));
-                case "interval" -> out.addAll(List.of("40", "100", "200"));
-                case "tip-energy" -> out.addAll(List.of("6", "12", "20"));
-                case "max-branch-depth" -> out.addAll(List.of("2", "3", "5"));
-                case "maxtips" -> out.addAll(List.of("4", "8", "16"));
+                case "growth-chance", "branch-chance", "persistence", "vertical" -> out.addAll(List.of("1%", "5%", "10%", "25%", "50%"));
+                case "thicken-per-tick", "thicken" -> out.addAll(List.of("5", "10", "20", "50"));
+                case "max-thickness-radius", "radius" -> out.addAll(List.of("5", "10", "15", "20"));
+                case "max-blocks-per-catalyst", "limit" -> out.addAll(List.of("-1", "1000", "5000", "10000"));
+                case "call-event-on-thicken", "call-event" -> out.addAll(List.of("true", "false"));
+                case "tip-energy" -> out.addAll(List.of("6", "12", "20", "30"));
+                case "max-branch-depth" -> out.addAll(List.of("2", "5", "10", "15"));
+                case "maxtips" -> out.addAll(List.of("10", "50", "100", "200", "500"));
                 case "time" -> out.addAll(List.of("true", "false"));
                 case "catalyst-block", "result-block" -> {
                     for (Material m : Material.values()) {
@@ -363,6 +398,33 @@ public class VeinSpreadPlugin extends JavaPlugin implements Listener, CommandExe
     public void onBlockBreak(@NotNull BlockBreakEvent e) {
         if (e.getBlock().getType() == veinConfig.catalystBlock) {
             veinManager.unregisterCatalyst(e.getBlock().getLocation());
+        }
+        if (e.getBlock().getType() == veinConfig.resultBlock) {
+            veinManager.onBlockDestroyed(e.getBlock().getLocation());
+        }
+    }
+
+    @EventHandler
+    public void onBlockExplode(@NotNull BlockExplodeEvent e) {
+        for (org.bukkit.block.Block b : e.blockList()) {
+            if (b.getType() == veinConfig.catalystBlock) {
+                veinManager.unregisterCatalyst(b.getLocation());
+            }
+            if (b.getType() == veinConfig.resultBlock) {
+                veinManager.onBlockDestroyed(b.getLocation());
+            }
+        }
+    }
+
+    @EventHandler
+    public void onEntityExplode(@NotNull EntityExplodeEvent e) {
+        for (org.bukkit.block.Block b : e.blockList()) {
+            if (b.getType() == veinConfig.catalystBlock) {
+                veinManager.unregisterCatalyst(b.getLocation());
+            }
+            if (b.getType() == veinConfig.resultBlock) {
+                veinManager.onBlockDestroyed(b.getLocation());
+            }
         }
     }
 }
