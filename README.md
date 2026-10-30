@@ -41,7 +41,7 @@
 ## 📦 Installation
 
 1. Make sure you have **Paper 1.21+** (or Spigot 1.21+) and **Java 21**.
-2. Download `VeinSpread-1.2.1.jar` from the releases page on Modrinth or GitHub.
+2. Download `VeinSpread-1.2.0.jar` from the releases page on Modrinth or GitHub.
 3. Place the `.jar` into the `plugins/` folder on your server.
 4. Restart the server.
 5. Open `plugins/VeinSpread/config.yml` — or use `/vein` directly in-game.
