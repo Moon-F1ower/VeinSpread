@@ -28,7 +28,7 @@ public class VeinManager extends BukkitRunnable {
     private final Map<Location, Location> blockOwner = new HashMap<>();
     private BukkitTask task;
     private final Random random = new Random();
-    
+
     private final BlockFace[] FACES = {
             BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST,
             BlockFace.WEST, BlockFace.UP, BlockFace.DOWN
@@ -97,7 +97,7 @@ public class VeinManager extends BukkitRunnable {
             }
             tipsSnapshot.put(entry.getKey().clone(), tipsCopy);
         }
-        
+
         Map<Location, Integer> totalSnapshot = new HashMap<>(totalPlaced);
         Map<Location, Set<Location>> placedSnapshot = new HashMap<>();
         for (Map.Entry<Location, Set<Location>> entry : placedBlocks.entrySet()) {
@@ -231,7 +231,6 @@ public class VeinManager extends BukkitRunnable {
                         }
                     }
                 } else {
-                    // FIX: Unregister if catalyst was removed by WorldEdit or something else
                     unregisterCatalyst(catalystLoc);
                     it.remove();
                     continue;
@@ -253,23 +252,23 @@ public class VeinManager extends BukkitRunnable {
                 }
 
                 Block next = tip.position.getBlock().getRelative(tip.direction);
-                
+
                 if (!next.getChunk().isLoaded()) continue;
-                
+
                 if (next.getType() == cfg.resultBlock) {
                     tip.position = next.getLocation();
-                    tip.energy--; 
-                    continue; 
+                    tip.energy--;
+                    continue;
                 }
-                
+
                 if (!cfg.replaceableBlocks.contains(next.getType())) {
                     tip.energy = 0;
                     continue;
                 }
 
-                BlockSpreadEvent spreadEvent = new BlockSpreadEvent(next, tip.position.getBlock(), cfg.resultBlock.createBlockData());
+                BlockSpreadEvent spreadEvent = new BlockSpreadEvent(next, tip.position.getBlock(), cfg.resultBlock.createBlockData().createBlockState());
                 Bukkit.getPluginManager().callEvent(spreadEvent);
-                
+
                 if (!spreadEvent.isCancelled()) {
                     next.setType(cfg.resultBlock, false);
                     if (placed.add(next.getLocation())) {
@@ -278,7 +277,7 @@ public class VeinManager extends BukkitRunnable {
                     }
                     total++;
                     totalPlaced.put(catalystLoc, total);
-                    
+
                     tip.position = next.getLocation();
                     tip.energy--;
                 } else {
@@ -297,7 +296,7 @@ public class VeinManager extends BukkitRunnable {
                         newBranches.add(new GrowthTip(tip.position.clone(), branchDir, branchEnergy, tip.branchDepth + 1));
                     }
                 }
-                
+
                 if (random.nextDouble() < cfg.verticalBranchChance) {
                     BlockFace vertDir = random.nextBoolean() ? BlockFace.UP : BlockFace.DOWN;
                     if (vertDir != tip.direction.getOppositeFace() && canGrow(tip.position.getBlock().getRelative(vertDir), cfg)) {
@@ -305,12 +304,12 @@ public class VeinManager extends BukkitRunnable {
                     }
                 }
             }
-            
+
             if (!thickenList.isEmpty() && cfg.thickenPerTick > 0) {
                 int checks = Math.min(cfg.thickenPerTick, thickenList.size());
                 double maxRadSq = cfg.maxThicknessRadius * cfg.maxThicknessRadius;
                 List<Location> toRemoveThick = new ArrayList<>();
-                
+
                 for (int i = 0; i < checks; i++) {
                     if (cfg.maxBlocksPerCatalyst > 0 && total >= cfg.maxBlocksPerCatalyst) {
                         break;
@@ -318,37 +317,37 @@ public class VeinManager extends BukkitRunnable {
 
                     Location checkLoc = thickenList.get(random.nextInt(thickenList.size()));
                     double distSq = checkLoc.distanceSquared(catalystLoc);
-                    
+
                     if (checkLoc.getBlock().getType() != cfg.resultBlock) {
                         toRemoveThick.add(checkLoc);
                         continue;
                     }
 
                     if (distSq >= maxRadSq) {
-                        toRemoveThick.add(checkLoc); 
+                        toRemoveThick.add(checkLoc);
                         continue;
                     }
-                    
+
                     boolean hasFreeNeighbor = false;
                     for (BlockFace face : FACES) {
                         if (cfg.replaceableBlocks.contains(checkLoc.getBlock().getRelative(face).getType())) {
                             hasFreeNeighbor = true; break;
                         }
                     }
-                    
+
                     if (!hasFreeNeighbor) {
                         toRemoveThick.add(checkLoc);
                         continue;
                     }
-                    
+
                     double chance = 1.0 - (distSq / maxRadSq);
                     if (random.nextDouble() < chance) {
                         BlockFace randFace = FACES[random.nextInt(FACES.length)];
                         Block neighbor = checkLoc.getBlock().getRelative(randFace);
                         if (neighbor.getChunk().isLoaded() && cfg.replaceableBlocks.contains(neighbor.getType())) {
-                            
+
                             if (cfg.callEventOnThicken) {
-                                BlockSpreadEvent thickenEvent = new BlockSpreadEvent(neighbor, checkLoc.getBlock(), cfg.resultBlock.createBlockData());
+                                BlockSpreadEvent thickenEvent = new BlockSpreadEvent(neighbor, checkLoc.getBlock(), cfg.resultBlock.createBlockData().createBlockState());
                                 Bukkit.getPluginManager().callEvent(thickenEvent);
                                 if (thickenEvent.isCancelled()) continue;
                             }
@@ -366,7 +365,7 @@ public class VeinManager extends BukkitRunnable {
                 for (Location loc : toRemoveThick) {
                     thickenList.remove(loc);
                     placed.remove(loc);
-                    blockOwner.remove(loc); // FIX: Clean up memory
+                    blockOwner.remove(loc);
                 }
             }
 
